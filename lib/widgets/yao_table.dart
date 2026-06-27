@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/yao_line.dart';
 import '../algorithms/liuqin_config.dart';
 import '../algorithms/constants.dart';
+import '../algorithms/dizhi_quantification.dart';
 
 /// 六爻详情表格组件
 /// 从上爻到初爻显示六神、伏神、六亲、地支、世应、本卦、变卦
@@ -12,6 +13,12 @@ class YaoTable extends StatelessWidget {
   final String? bianGuaName; // 变卦名称（有动爻时）
   final bool hasDongYao; // 是否有动爻
 
+  /// 是否显示数字量化
+  final bool showQuantification;
+
+  /// 量化值列表（从初爻到上爻，与yaoLines顺序对应）
+  final List<QuantificationResult>? quantificationResults;
+
   const YaoTable({
     super.key,
     required this.yaoLines,
@@ -19,6 +26,8 @@ class YaoTable extends StatelessWidget {
     required this.benGuaName,
     this.bianGuaName,
     this.hasDongYao = false,
+    this.showQuantification = false,
+    this.quantificationResults,
   });
 
   @override
@@ -57,7 +66,8 @@ class YaoTable extends StatelessWidget {
           const _HeaderCell('神', width: 28),
           const _HeaderCell('伏', width: 36),
           const _HeaderCell('六亲', width: 36),
-          const _HeaderCell('支', width: 36),
+          // 如果显示量化，支列加宽
+          _HeaderCell('支', width: showQuantification ? 50 : 36),
           const _HeaderCell('', width: 24),
           // 本卦名称（加黑加粗）
           _HeaderCell(benGuaName, width: 68, alignLeft: true, bold: true),
@@ -81,6 +91,13 @@ class YaoTable extends StatelessWidget {
     // 地支+五行（紧凑显示，不留空）
     final ganZhiDisplay = yao.ganZhi ?? '';
     final zhiWuXing = ganZhiDisplay + (yao.wuXing ?? '');
+
+    // 获取量化值（按位置索引匹配，避免重复地支匹配错误）
+    QuantificationResult? quantResult;
+    if (showQuantification && quantificationResults != null && quantificationResults!.length >= yao.position) {
+      // position 1-6 对应 quantificationResults 索引 0-5
+      quantResult = quantificationResults![yao.position - 1];
+    }
 
     // 伏神：显示六亲首字+伏神地支（如伏神是"酉"，六亲是"官鬼"，显示为"官酉")
     String fuShenDisplay = '';
@@ -117,13 +134,8 @@ class YaoTable extends StatelessWidget {
           // 六亲（完整两个字）
           _YaoCell(liuQinDisplay, width: 36),
 
-          // 地支+五行（紧凑，不留空）
-          _YaoCell(
-            zhiWuXing,
-            width: 36,
-            color: isXunKong ? Colors.grey : null,
-            isItalic: isXunKong,
-          ),
+          // 地支+五行（支持量化显示）
+          _buildZhiCell(zhiWuXing, isXunKong, quantResult),
 
           // 世应
           _YaoCell(
@@ -144,14 +156,57 @@ class YaoTable extends StatelessWidget {
     );
   }
 
-  String _getBianSymbol(YaoLine yao) {
-    if (!yao.isDong) return '';
-    // 动爻变卦：阳变阴，阴变阳
-    if (yao.isYang) {
-      return '▅▅　▅▅'; // 老阳变少阴
-    } else {
-      return '▅▅▅▅▅'; // 老阴变少阳
+  /// 构建地支单元格（支持量化显示）
+  Widget _buildZhiCell(String zhiWuXing, bool isXunKong, QuantificationResult? quant) {
+    // 量化值颜色和文本
+    Color? quantColor;
+    String? quantText;
+    
+    if (showQuantification && quant != null) {
+      if (quant.isRiChong) {
+        quantColor = Colors.orange;
+        quantText = '*';
+      } else {
+        final value = quant.totalValue ?? 0;
+        if (value > 0) {
+          quantColor = Colors.red;
+        } else if (value < 0) {
+          quantColor = Colors.blue;
+        } else {
+          quantColor = Colors.grey;
+        }
+        quantText = value.toStringAsFixed(1).replaceAll('.0', '');
+      }
     }
+    
+    return SizedBox(
+      width: showQuantification ? 50 : 36,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            zhiWuXing,
+            style: TextStyle(
+              fontSize: 14,
+              color: isXunKong ? Colors.grey : Colors.black87,
+              fontStyle: isXunKong ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+          if (showQuantification && quantText != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                quantText,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: quantColor,
+                  fontWeight: quant?.isRiChong == true ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -186,19 +241,13 @@ class _YaoCell extends StatelessWidget {
   final String text;
   final double width;
   final Color? color;
-  final bool isBold;
-  final bool isItalic;
   final FontWeight fontWeight;
-  final bool alignLeft;
 
   const _YaoCell(
     this.text, {
     required this.width,
     this.color,
-    this.isBold = false,
-    this.isItalic = false,
     this.fontWeight = FontWeight.normal,
-    this.alignLeft = false,
   });
 
   @override
@@ -210,10 +259,9 @@ class _YaoCell extends StatelessWidget {
         style: TextStyle(
           fontSize: 14,
           color: color ?? Colors.black87,
-          fontWeight: isBold ? FontWeight.bold : fontWeight,
-          fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+          fontWeight: fontWeight,
         ),
-        textAlign: alignLeft ? TextAlign.left : TextAlign.center,
+        textAlign: TextAlign.center,
       ),
     );
   }

@@ -4,7 +4,6 @@ library;
 
 import '../models/yao_line.dart';
 import 'liuqin_config.dart';
-import 'najia_config.dart';
 import 'constants.dart';
 
 /// 伏神查找器

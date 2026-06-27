@@ -38,9 +38,9 @@ class _ShakeScreenState extends State<ShakeScreen> {
 
   // --- 手摇模式传感器 ---
   StreamSubscription<AccelerometerEvent>? _accelSub;
-  double _accelMagnitude = 9.8;
-  Timer? _stillTimer;
-  bool _isHandShaking = false;
+  double _lastAccelMag = 9.8;
+  int _shakeCount = 0;
+  DateTime? _lastShakeTime;
 
   @override
   void initState() {
@@ -51,7 +51,6 @@ class _ShakeScreenState extends State<ShakeScreen> {
   @override
   void dispose() {
     _accelSub?.cancel();
-    _stillTimer?.cancel();
     super.dispose();
   }
 
@@ -65,8 +64,8 @@ class _ShakeScreenState extends State<ShakeScreen> {
   void _toggleHandShake(bool on) {
     setState(() {
       _handShake = on;
-      _stillTimer?.cancel();
-      _isHandShaking = false;
+      _shakeCount = 0;
+      _lastShakeTime = null;
     });
     if (on) {
       _startSensors();
@@ -82,23 +81,44 @@ class _ShakeScreenState extends State<ShakeScreen> {
     _accelSub?.cancel();
     _accelSub = accelerometerEventStream().listen((event) {
       final mag = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-      _accelMagnitude = _accelMagnitude * 0.7 + mag * 0.3;
-      final diff = (mag - _accelMagnitude).abs();
+      final diff = (mag - _lastAccelMag).abs();
+      _lastAccelMag = mag;
 
-      if (!_isHandShaking && _phase == _Phase.idle && diff > 12) {
-        _isHandShaking = true;
-        _stillTimer?.cancel();
-        _throw();
-      } else if (_isHandShaking && _phase == _Phase.rotating && diff < 2) {
-        if (_stillTimer == null || !_stillTimer!.isActive) {
-          _stillTimer = Timer(const Duration(seconds: 1), () {
-            if (mounted) {
-              _stop();
+      final now = DateTime.now();
+
+      // 检测摇晃：加速度变化超过阈值
+      // 在 idle 或 showing 状态下都可以触发（手摇模式下自动进入下一爻）
+      if ((_phase == _Phase.idle || (_phase == _Phase.showing && _currentThrow < 6)) && diff > 3) {
+        // 短时间内多次检测到摇晃才算真正开始摇
+        if (_lastShakeTime != null && now.difference(_lastShakeTime!).inMilliseconds < 500) {
+          _shakeCount++;
+          if (_shakeCount >= 3) {
+            // 如果在 showing 状态，先进入下一爻
+            if (_phase == _Phase.showing) {
+              _next();
             }
-          });
+            // 等待一个短暂时间让状态稳定后开始旋转
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (_phase == _Phase.idle) {
+                _throw();
+              }
+            });
+            _shakeCount = 0;
+          }
+        } else {
+          _shakeCount = 1;
         }
-      } else if (_isHandShaking && _phase == _Phase.rotating && diff >= 2) {
-        _stillTimer?.cancel();
+        _lastShakeTime = now;
+      }
+
+      // 检测静止：连续低变化表示停止摇晃
+      if (_phase == _Phase.rotating && diff < 1.5) {
+        if (_lastShakeTime != null && now.difference(_lastShakeTime!).inMilliseconds > 800) {
+          // 停止摇晃超过800ms，自动显示结果
+          _stop();
+        }
+      } else if (_phase == _Phase.rotating && diff >= 1.5) {
+        _lastShakeTime = now;
       }
     });
   }
@@ -118,21 +138,27 @@ class _ShakeScreenState extends State<ShakeScreen> {
   }
 
   void _stop() {
-    _stillTimer?.cancel();
-    _isHandShaking = false;
     setState(() {
       for (final c in _coins) {
         c.stopping = true;
       }
-      _phase = _Phase.showing;
       _currentBackCount = _coins.where((c) => !c.isHeads).length;
       _backCounts.add(_currentBackCount);
+      _shakeCount = 0;
+      _lastShakeTime = null;
+
+      // 第六爻完成后直接进入完成状态
+      if (_currentThrow == 6) {
+        _phase = _Phase.complete;
+      } else {
+        _phase = _Phase.showing;
+      }
     });
   }
 
   void _next() {
-    _stillTimer?.cancel();
-    _isHandShaking = false;
+    _shakeCount = 0;
+    _lastShakeTime = null;
     if (_currentThrow < 6) {
       setState(() {
         _currentThrow++;
@@ -170,6 +196,9 @@ class _ShakeScreenState extends State<ShakeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 判断是否是第六爻且已显示结果
+    final isLastYaoDone = _currentThrow == 6 && _phase == _Phase.showing;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('第 $_currentThrow/6 爻'),
@@ -198,22 +227,34 @@ class _ShakeScreenState extends State<ShakeScreen> {
                   children: [
                     _CoinTray(coins: _coins, phase: _phase),
                     const SizedBox(height: 12),
+                    // 按钮放在铜钱下方
+                    if (!_handShake)
+                      _ActionButtons(
+                        phase: _phase,
+                        isLastYaoDone: isLastYaoDone,
+                        onThrow: _throw,
+                        onStop: _stop,
+                        onNext: _next,
+                        onFinish: _finish,
+                      ),
+                    if (_handShake && _phase == _Phase.complete)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _FinishButton(onFinish: _finish),
+                      ),
+                    const SizedBox(height: 8),
                     if (_phase == _Phase.rotating && _handShake)
-                      _HintBanner('🔄 停止摇动后自动揭晓'),
+                      _HintBanner('停止摇动后自动揭晓'),
                     if (_phase == _Phase.rotating && !_handShake)
                       _HintBanner('旋转中，点击下方按钮停止'),
                     if (_phase == _Phase.idle && _handShake)
-                      _HintBanner('📳 请摇动手机'),
+                      _HintBanner('请摇动手机'),
                     if (_phase == _Phase.showing)
                       _ResultCard(name: _yaoNames[_currentThrow - 1], backCount: _currentBackCount),
                   ],
                 ),
               ),
             ),
-            if (!_handShake)
-              _BottomBar(phase: _phase, onThrow: _throw, onStop: _stop, onNext: _next, onFinish: _finish),
-            if (_handShake && _phase == _Phase.complete)
-              _BottomBar(phase: _Phase.complete, onThrow: () {}, onStop: () {}, onNext: () {}, onFinish: _finish),
             _ProgressPanel(backCounts: _backCounts),
           ],
         ),
@@ -311,36 +352,73 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
-class _BottomBar extends StatelessWidget {
+/// 操作按钮组件（放在铜钱下方）
+class _ActionButtons extends StatelessWidget {
   final _Phase phase;
+  final bool isLastYaoDone;
   final VoidCallback onThrow, onStop, onNext, onFinish;
-  const _BottomBar({required this.phase, required this.onThrow, required this.onStop, required this.onNext, required this.onFinish});
+  const _ActionButtons({
+    required this.phase,
+    required this.isLastYaoDone,
+    required this.onThrow,
+    required this.onStop,
+    required this.onNext,
+    required this.onFinish,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // 第六爻摇完直接显示"进行排卦"
+    if (isLastYaoDone) {
+      return _FinishButton(onFinish: onFinish);
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: switch (phase) {
-        _Phase.idle => _btn('🎲 抛铜钱', Icons.casino, onThrow),
-        _Phase.rotating => _btn('👀 看结果', Icons.remove_red_eye, onStop, color: Colors.orange.shade700),
-        _Phase.showing => _btn('➡ 下一爻', Icons.arrow_forward, onNext),
-        _Phase.complete => _btn('📋 查看排盘', Icons.auto_awesome, onFinish, color: Colors.green.shade700),
+        _Phase.idle => _btn('抛铜钱', onThrow),
+        _Phase.rotating => _btn('看结果', onStop, color: Colors.orange.shade700),
+        _Phase.showing => _btn('下一爻', onNext),
+        _Phase.complete => _FinishButton(onFinish: onFinish),
       },
     );
   }
 
-  Widget _btn(String label, IconData icon, VoidCallback onTap, {Color? color}) {
+  Widget _btn(String label, VoidCallback onTap, {Color? color}) {
     return SizedBox(
-      width: double.infinity, height: 48,
-      child: ElevatedButton.icon(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
         onPressed: onTap,
-        icon: Icon(icon),
-        label: Text(label, style: const TextStyle(fontSize: 16)),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: color != null ? Colors.white : null,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
+        child: Text(label, style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+}
+
+/// 进行排卦按钮
+class _FinishButton extends StatelessWidget {
+  final VoidCallback onFinish;
+  const _FinishButton({required this.onFinish});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onFinish,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green.shade700,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: const Text('进行排卦', style: TextStyle(fontSize: 16)),
       ),
     );
   }

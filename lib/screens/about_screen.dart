@@ -128,6 +128,63 @@ class AboutScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
+            // 辅助解卦功能说明
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.auto_fix_high, size: 24, color: Colors.purple.shade700),
+                        const SizedBox(width: 8),
+                        const Text(
+                          '辅助解卦功能',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '排盘结果页和历史详情页提供以下辅助解卦工具：',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildFeatureItem(
+                      '数字量化',
+                      '显示每个爻位地支的数字量化值。正值（红色）表示有利，负值（蓝色）表示不利，日冲显示"*"，0值显示灰色。数值来源于月建和日辰对该地支的作用强度。',
+                      Colors.purple,
+                    ),
+                    const SizedBox(height: 10),
+
+                    _buildFeatureItem(
+                      '冲合生克连线',
+                      '直观显示爻位之间的五行关系：\n• 冲（红色）：相冲关系\n• 合（绿色）：相合关系\n• 生（橙色）：相生关系\n• 克（蓝色）：相克关系',
+                      Colors.red,
+                    ),
+                    const SizedBox(height: 10),
+
+                    const Text(
+                      '连线来源说明：',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildRelationSource('月建', '从日期栏的月建干支发出，指向相关爻位'),
+                    _buildRelationSource('日辰', '从日期栏的日辰干支发出，指向相关爻位'),
+                    _buildRelationSource('动爻', '从动爻发出，指向静爻或伏神'),
+                    _buildRelationSource('变爻', '从变爻发出，指向本位动爻（仅影响自身）'),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             // 联系方式
             Card(
               child: Padding(
@@ -265,6 +322,70 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text('$coins → $type'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(String title, String description, Color color) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          margin: const EdgeInsets.only(top: 2),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRelationSource(String source, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              source,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF8B4513),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              description,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
           ),
         ],
       ),

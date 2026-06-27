@@ -6,7 +6,6 @@ import '../models/divination_record.dart';
 import '../models/gua_info.dart';
 import '../models/shensha_result.dart';
 import '../models/yao_line.dart';
-import 'constants.dart';
 import 'ganzhi_converter.dart';
 import 'gua_generator.dart';
 import 'najia_config.dart';
