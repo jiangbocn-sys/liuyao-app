@@ -4,6 +4,13 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- OCR识别所需权限 -->
+	<key>NSCameraUsageDescription</key>
+	<string>需要相机权限以拍摄排盘图片进行识别</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>需要相册权限以选择排盘图片进行识别</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>需要相册写入权限以保存排盘图片</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

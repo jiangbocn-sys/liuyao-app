@@ -69,11 +69,11 @@ class YaoTable extends StatelessWidget {
           // 如果显示量化，支列加宽
           _HeaderCell('支', width: showQuantification ? 50 : 36),
           const _HeaderCell('', width: 24),
-          // 本卦名称（加黑加粗）
-          _HeaderCell(benGuaName, width: 68, alignLeft: true, bold: true),
-          // 变卦名称（有动爻时显示，加黑加粗）
+          // 本卦名称（加黑加粗）- 增加宽度避免换行
+          _HeaderCell(benGuaName, width: 80, alignLeft: true, bold: true),
+          // 变卦名称（有动爻时显示，加黑加粗）- 增加宽度避免换行
           if (hasDongYao && bianGuaName != null)
-            _HeaderCell(bianGuaName!, width: 120, alignLeft: true, bold: true),
+            _HeaderCell(bianGuaName!, width: 130, alignLeft: true, bold: true),
         ],
       ),
     );
@@ -145,12 +145,12 @@ class YaoTable extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
 
-          // 本卦爻象
-          _YaoSymbolCell(yao, width: 68),
+          // 本卦爻象 - 增加宽度避免换行
+          _YaoSymbolCell(yao, width: 80),
 
-          // 变卦爻象+六亲+地支五行（有动爻时才显示）
+          // 变卦爻象+六亲+地支五行（有动爻时才显示）- 增加宽度避免换行
           if (hasDongYao)
-            _BianYaoCell(yao, width: 120),
+            _BianYaoCell(yao, width: 130),
         ],
       ),
     );
@@ -284,7 +284,7 @@ class _YaoSymbolCell extends StatelessWidget {
       child: Text(
         symbol,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 13,
           color: isDong ? Colors.orange.shade700 : const Color(0xFF8B4513),
           fontWeight: FontWeight.bold,
         ),
@@ -347,19 +347,19 @@ class _BianYaoCell extends StatelessWidget {
           Text(
             symbol,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               color: yao.isDong ? Colors.orange.shade700 : const Color(0xFF8B4513),
               fontWeight: FontWeight.bold,
             ),
           ),
-          // 六亲+地支五行
+          // 六亲+地支五行 - 减少间隙
           if (bianInfo.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsets.only(left: 1),
               child: Text(
                 bianInfo,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: Colors.black87,
                 ),
               ),

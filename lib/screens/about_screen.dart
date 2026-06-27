@@ -80,10 +80,76 @@ class AboutScreen extends StatelessWidget {
                     _buildStep(3, '输入所问问题', '填写您想要咨询的问题（可选）。'),
                     const SizedBox(height: 12),
 
-                    _buildStep(4, '选择起卦方式', '• 在线摇卦：模拟抛掷三枚铜钱，共六次\n• 手动输入：直接输入六次抛掷的背面数'),
+                    _buildStep(4, '选择起卦方式', '• 在线摇卦：模拟抛掷三枚铜钱，共六次\n• 手动输入：直接输入六次抛掷的背面数\n• 拍照导入：拍摄或选择排盘图片，自动识别'),
                     const SizedBox(height: 12),
 
                     _buildStep(5, '查看排盘结果', '排盘完成后可查看本卦、变卦、六爻详情等信息，并可保存到历史记录。'),
+
+                    const SizedBox(height: 16),
+
+                    // 拍照导入详细说明
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.camera_alt, size: 24, color: Colors.teal.shade700),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  '拍照导入排盘',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              '无需手动输入，通过拍照或选择图片即可导入已有排盘：',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildPhotoStep(1, '选择图片', '点击"拍照"使用相机拍摄，或点击"相册"从手机中选择排盘图片。'),
+                            const SizedBox(height: 8),
+
+                            _buildPhotoStep(2, '开始识别', '点击"开始识别"按钮，系统将自动识别图片中的排盘信息。识别完全在本地进行，无需网络。'),
+                            const SizedBox(height: 8),
+
+                            _buildPhotoStep(3, '编辑修正', '识别完成后，可对主要信息进行编辑修正：\n• 性别、占问内容\n• 干支四柱（年柱、月柱、日柱、时柱）\n• 本卦、变卦卦名'),
+                            const SizedBox(height: 8),
+
+                            _buildPhotoStep(4, '校正排盘', '点击"校正排盘"按钮，系统将根据识别/编辑的信息，自动计算完整的排盘数据：\n• 动爻位置（从本卦变卦推算）\n• 六神、六亲、地支（纳甲装卦）\n• 世应位置\n• 伏神、神煞\n• 旬空（算法校正）'),
+                            const SizedBox(height: 12),
+
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.orange.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.lightbulb_outline, size: 18, color: Colors.orange.shade700),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '提示：只需识别卦名和日柱干支即可排盘，其他信息由算法自动推算。占问内容支持多行识别。',
+                                      style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -389,6 +455,52 @@ class AboutScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPhotoStep(int number, String title, String content) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: Colors.teal.shade700,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '$number',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                content,
+                style: const TextStyle(fontSize: 13, color: Colors.black87),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

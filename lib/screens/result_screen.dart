@@ -371,9 +371,6 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
               ),
 
-            // 基本信息
-            _buildInfoCard(record),
-
             const SizedBox(height: 4),
 
             // 六爻详情表格（带关系连线）

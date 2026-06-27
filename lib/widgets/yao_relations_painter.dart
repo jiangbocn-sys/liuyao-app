@@ -166,10 +166,22 @@ class _RelationsPainter extends CustomPainter {
     // "支"列的x位置：神(28)+伏(36)+六亲(36) = 100，加上量化列偏移
     final zhiColumnX = 100.0 + (showQuantification ? 28 : 18);
 
+    // 变卦列的x位置：前面的列宽度之和
+    // 神(28)+伏(36)+六亲(36)+支(36或50)+世应(24)+本卦(80) = 244或256
+    final benGuaWidth = 80.0;
+    final bianGuaStartX = zhiColumnX + (showQuantification ? 50 : 36) + 24 + benGuaWidth + 4;
+    // 变卦地支在变卦列中的位置：爻象符号后约60px（130宽度的后半部分是地支五行）
+    final bianGuaZhiX = bianGuaStartX + 60;
+
     // 爻位置（从上到下，position 6→1 对应 index 0→5）
     // Y = yaoTableStartY + cardPaddingTop(4) + headerH + rowH的中心
     final yaoPositions = List.generate(6, (i) {
       return Offset(zhiColumnX, yaoTableStartY + 4 + headerH + rowH * (i + 0.5));
+    });
+
+    // 变爻位置（从变卦列的地支位置出发）
+    final bianYaoPositions = List.generate(6, (i) {
+      return Offset(bianGuaZhiX, yaoTableStartY + 4 + headerH + rowH * (i + 0.5));
     });
 
     // 月建位置：从InfoCard中的月建文字位置出发
@@ -181,20 +193,28 @@ class _RelationsPainter extends CustomPainter {
     // 绘制关系
     for (int i = 0; i < relations.length; i++) {
       final relation = relations[i];
-      _drawRelation(canvas, relation, i, monthPos, dayPos, yaoPositions, size);
+      _drawRelation(canvas, relation, i, monthPos, dayPos, yaoPositions, bianYaoPositions, size);
     }
   }
 
   void _drawRelation(Canvas canvas, YaoRelation relation, int index,
-      Offset monthPos, Offset dayPos, List<Offset> yaoPositions, Size size) {
+      Offset monthPos, Offset dayPos, List<Offset> yaoPositions, List<Offset> bianYaoPositions, Size size) {
     // 获取起点
     Offset start;
     if (relation.fromType == 'month') {
       start = monthPos; // 从信息卡的月建位置出发
     } else if (relation.fromType == 'day') {
       start = dayPos; // 从信息卡的日辰位置出发
+    } else if (relation.fromType == 'bian') {
+      // 变爻从变卦列的地支位置出发
+      final idx = 6 - relation.fromPosition;
+      if (idx >= 0 && idx < 6) {
+        start = bianYaoPositions[idx];
+      } else {
+        return;
+      }
     } else {
-      // yao 或 bian，position 1-6 对应 index 5-0
+      // yao（本卦爻）position 1-6 对应 index 5-0
       final idx = 6 - relation.fromPosition;
       if (idx >= 0 && idx < 6) {
         start = yaoPositions[idx];

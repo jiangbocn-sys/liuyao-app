@@ -19,10 +19,15 @@ android {
         applicationId = "com.bobo.liuyao_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 26  // google_mlkit_genai requires minSdk 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // 只保留arm64-v8a架构，减小APK大小
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
     buildTypes {
@@ -30,6 +35,8 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            // 启用proguard规则解决R8混淆问题
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
@@ -42,4 +49,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// Google ML Kit 中文文字识别
+dependencies {
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
 }

@@ -111,6 +111,17 @@ class DivinationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 直接设置排盘记录（用于图像导入校正）
+  void setRecord(DivinationRecord record) {
+    _record = record;
+    _divTime = record.divTime;
+    _question = record.question;
+    _startMethod = record.startMethod;
+    _querentName = record.querentName;
+    _querentGender = record.querentGender;
+    notifyListeners();
+  }
+
   /// 清除当前排盘（重新开始）
   void clear() {
     _backCounts = [];

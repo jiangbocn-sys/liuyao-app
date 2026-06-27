@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../algorithms/ganzhi_converter.dart';
 import '../providers/divination_provider.dart';
 import '../screens/about_screen.dart';
+import '../screens/image_import_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -293,6 +294,27 @@ class _HomeScreenState extends State<HomeScreen> {
               label: const Text('在线摇卦'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // 拍照导入按钮
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ImageImportScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.camera_alt),
+              label: const Text('拍照导入排盘'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
               ),
             ),
 
